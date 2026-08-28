@@ -116,7 +116,9 @@ a missing semicolon is a *compile* error and a missing function body is a
 
 ### Step 1: Install a C compiler
 
-You need **GCC 14+** or **Clang 18+** for C23 support, plus `make`.
+You need **GCC 14+** or **Clang 19+** for C23 support, plus `make`.
+(`#embed` is the one feature that wants GCC 15+; the koan detects it and
+steps aside on older compilers.)
 
 <details open>
 <summary><b>macOS</b></summary>

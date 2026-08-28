@@ -2,7 +2,11 @@
 
 ## "unknown argument: -std=c23" / "invalid value 'c23'"
 
-Your compiler predates C23. You need **GCC 14+** or **Clang 18+**.
+Your compiler predates C23. You need **GCC 14+** or **Clang 19+**.
+
+C23 landed in compilers gradually. `constexpr` and `auto` need GCC 13+ or
+Clang 19+; `#embed` needs GCC 15+ or Clang 19+ and is detected at compile
+time, so an older compiler skips that one koan rather than failing.
 
 ```sh
 cc --version          # what you have

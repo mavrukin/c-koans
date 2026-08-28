@@ -4,28 +4,53 @@ on:
   push:
   pull_request:
 
+# C23 support is uneven across compiler versions, so the matrix pins versions
+# that actually implement it rather than whatever the runner ships:
+#
+#   constexpr, auto      GCC 13+ / Clang 19+
+#   typeof_unqual        GCC 14+ / Clang 17+
+#   #embed               GCC 15+ / Clang 19+   (guarded by __has_embed)
+#
+# Apple Clang on the macOS runners lags upstream, so macOS installs LLVM from
+# Homebrew instead of using the Xcode compiler.
+
 jobs:
   solutions:
-    name: ${{ matrix.os }} / ${{ matrix.cc }}
+    name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-24.04, cc: gcc-14 }
-          - { os: ubuntu-24.04, cc: clang-18 }
-          - { os: macos-15,     cc: clang }
+          - { os: ubuntu-24.04, name: "linux / gcc-14",  cc: gcc-14,  install: apt }
+          - { os: ubuntu-24.04, name: "linux / clang-19", cc: clang-19, install: llvm }
+          - { os: macos-15,    name: "macos / clang",    cc: clang,   install: brew }
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install compiler
-        if: runner.os == 'Linux'
+      - name: Install GCC
+        if: matrix.install == 'apt'
         run: |
           sudo apt-get update
           sudo apt-get install -y ${{ matrix.cc }}
 
+      - name: Install Clang from apt.llvm.org
+        if: matrix.install == 'llvm'
+        run: |
+          wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 19
+          sudo apt-get install -y clang-19
+
+      - name: Install LLVM from Homebrew
+        if: matrix.install == 'brew'
+        run: |
+          brew install llvm
+          echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
+
       - name: Compiler version
-        run: ${{ matrix.cc }} --version
+        run: |
+          ${{ matrix.cc }} --version
+          ${{ matrix.cc }} -std=c23 -dM -E -x c /dev/null | grep -E '__STDC_VERSION__'
 
       - name: koans/ is in sync with solutions/
         run: python3 tools/genkoans.py --check
@@ -33,14 +58,20 @@ jobs:
       - name: Reference solutions all pass
         run: make check CC=${{ matrix.cc }}
 
+      - name: Solutions build without warnings
+        run: |
+          make clean
+          make check CC=${{ matrix.cc }} 2>&1 | tee build.log
+          if grep -qiE '\bwarning\b' build.log; then
+            echo "::error::the solutions must build without warnings"
+            grep -iE '\bwarning\b' build.log
+            exit 1
+          fi
+
       - name: Solutions pass under sanitizers
         run: |
           make clean
-          make check CC=${{ matrix.cc }} \
-            CFLAGS="-std=c23 -g -O1 -Wall -Wextra -Iinclude -Ikoans \
-                    -Wno-reserved-identifier -Wno-reserved-macro-identifier \
-                    -fsanitize=address,undefined -fno-omit-frame-pointer" \
-            LDFLAGS="-fsanitize=address,undefined"
+          make san-check CC=${{ matrix.cc }}
 
       # Two separate assertions, deliberately. If this were a single "does
       # make fail?" check, a compile error in koans/ would be indistinguishable
@@ -53,10 +84,24 @@ jobs:
           make check-unsolved CC=${{ matrix.cc }}
 
       - name: Capstone projects build
-        run: make projects CC=${{ matrix.cc }}
+        run: make -C projects all CC=${{ matrix.cc }}
 
       - name: Capstone library self-checks
         run: make -C projects check CC=${{ matrix.cc }}
 
       - name: Capstone self-checks under sanitizers
         run: make -C projects san CC=${{ matrix.cc }}
+
+      - name: Web server serves, and refuses traversal
+        run: |
+          make -C projects all CC=${{ matrix.cc }}
+          ./projects/build/koanhttpd --port 8137 --root projects/webserver/www &
+          SERVER_PID=$!
+          sleep 2
+          set -e
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8137/)" = 200
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8137/cgi-bin/env.cgi)" = 200
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8137/nope)" = 404
+          test "$(curl -s -o /dev/null -w '%{http_code}' --path-as-is http://127.0.0.1:8137/%2e%2e%2fMakefile)" = 404
+          echo "web server: ok"
+          kill "$SERVER_PID"

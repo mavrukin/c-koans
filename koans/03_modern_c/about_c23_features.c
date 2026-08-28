@@ -241,9 +241,20 @@ KOAN(checked_arithmetic_reports_overflow)
  * `#embed` puts the contents of a file into your program as an initialiser
  * list, at compile time. Before C23 this needed a build step and a generated
  * .c file; now it is one directive.
+ *
+ * It is also the newest thing in this lesson and the last to be implemented:
+ * it needs GCC 15+ or Clang 19+. `__has_embed` is how you ask before relying
+ * on it — the same pattern as `__has_include`, and the reason both exist.
  */
+#ifdef __has_embed
+#  if __has_embed("assets/greeting.txt")
+#    define KOAN_HAVE_EMBED 1
+#  endif
+#endif
+
 KOAN(embed_includes_binary_data)
 {
+#ifdef KOAN_HAVE_EMBED
     static const unsigned char greeting[] = {
 #embed "assets/greeting.txt"
         , '\0'                      /* #embed does not add a terminator */
@@ -251,12 +262,13 @@ KOAN(embed_includes_binary_data)
 
     KOAN_EQ_STR(__STR, (const char *)greeting);
     KOAN_EQ_SZ(__SZ, sizeof greeting);   /* 17 bytes plus our NUL */
-
-    /* __has_embed lets you check availability before relying on it. */
-#if __has_embed("assets/greeting.txt")
-    KOAN_TRUE(true);
 #else
-    KOAN_FAIL("the asset should be embeddable");
+    /*
+     * Your compiler predates #embed, so the koan cannot be asked and passes
+     * unanswered. The feature is real and worth reading about above; a newer
+     * compiler will turn this into a genuine exercise.
+     */
+    KOAN_TRUE(true);
 #endif
 }
 
