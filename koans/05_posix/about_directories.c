@@ -32,8 +32,15 @@ static void write_file(const char *path, const char *text)
     fclose(f);
 }
 
+static void destroy_tree(void);
+
+/*
+ * Idempotent on purpose. A koan that fails jumps straight out, skipping its
+ * cleanup, so the next one must not assume a clean slate.
+ */
 static void build_tree(void)
 {
+    destroy_tree();
     mkdir(TREE, 0700);
     mkdir("koan_tree/sub", 0700);
     write_file("koan_tree/a.txt", "aaa");
@@ -57,6 +64,11 @@ static void destroy_tree(void)
  */
 KOAN(mkdir_creates_exactly_one_level)
 {
+    /* Start from a known state: an earlier koan that failed would have jumped
+     * out before its own cleanup ran. */
+    unlink("koan_mk/f");
+    rmdir("koan_mk");
+
     KOAN_EQ_INT(__, mkdir("koan_mk", 0700));
 
     /* Creating it twice fails with EEXIST. */

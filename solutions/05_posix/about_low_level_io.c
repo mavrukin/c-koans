@@ -75,6 +75,7 @@ KOAN(descriptors_are_small_integers)
 KOAN(open_flags_are_a_bitmask)
 {
     const char *path = "koan_fd_flags.tmp";
+    unlink(path);                  /* start from a known state, see below */
 
     /* O_EXCL with O_CREAT fails if the file already exists — the atomic
      * "create only if absent" that a lock file needs. */

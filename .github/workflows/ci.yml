@@ -58,6 +58,18 @@ jobs:
       - name: koans/ is in sync with solutions/
         run: python3 tools/genkoans.py --check
 
+      # The koans create scratch files while they run, and a koan that fails
+      # jumps out before its cleanup. Committing one of those breaks a fresh
+      # clone: a koan that expects to create a file finds it already there.
+      - name: No scratch artifacts committed
+        run: |
+          if git ls-files | grep -qE '^koan_|\.tmp$'; then
+            echo "::error::scratch files are committed; they break a fresh clone"
+            git ls-files | grep -E '^koan_|\.tmp$'
+            exit 1
+          fi
+          echo "no scratch files tracked: ok"
+
       - name: Reference solutions all pass
         run: make check
 
@@ -70,6 +82,20 @@ jobs:
             grep -iE '\bwarning\b' build.log
             exit 1
           fi
+
+      # A successful run must be a no-op on the working tree. This is also how
+      # the koans prove they are idempotent: run twice, still clean.
+      - name: Koans leave the working tree clean
+        run: |
+          make clean
+          make check
+          make check
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::running the koans left files behind"
+            git status --porcelain
+            exit 1
+          fi
+          echo "working tree clean after two runs: ok"
 
       - name: Solutions pass under sanitizers
         run: |

@@ -10,3 +10,11 @@ compile_commands.json
 
 # Built by projects/Makefile into the document root so the server can run it
 projects/webserver/www/cgi-bin/env.cgi
+
+# Scratch files the koans create while they run. A koan that fails leaves its
+# cleanup unrun (the longjmp skips it), so these can appear at any time — and
+# committing one breaks a fresh clone, because koans that expect to create a
+# file find it already there.
+koan_*.tmp
+koan_*/
+*.tmp
