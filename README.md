@@ -116,9 +116,11 @@ a missing semicolon is a *compile* error and a missing function body is a
 
 ### Step 1: Install a C compiler
 
-You need **GCC 14+** or **Clang 19+** for C23 support, plus `make`.
-(`#embed` is the one feature that wants GCC 15+; the koan detects it and
-steps aside on older compilers.)
+You need **GCC 15+** or **Clang 19+**, plus `make`.
+
+These koans target ISO C23 strictly. GCC 14 implements most of C23 but still
+reports the pre-ratification version number, so the very first lesson rejects
+it — GCC 15 is the first release that reports the ratified `202311L`.
 
 <details open>
 <summary><b>macOS</b></summary>
@@ -131,7 +133,7 @@ That gives you Apple Clang and `make`. For GCC instead:
 
 ```sh
 brew install gcc
-make CC=gcc-14
+make CC=gcc-15
 ```
 </details>
 
@@ -140,8 +142,8 @@ make CC=gcc-14
 
 ```sh
 sudo apt update
-sudo apt install build-essential gcc-14
-make CC=gcc-14
+sudo apt install build-essential gcc-15
+make CC=gcc-15
 ```
 </details>
 

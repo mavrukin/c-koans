@@ -2,11 +2,7 @@
 
 ## "unknown argument: -std=c23" / "invalid value 'c23'"
 
-Your compiler predates C23. You need **GCC 14+** or **Clang 19+**.
-
-C23 landed in compilers gradually. `constexpr` and `auto` need GCC 13+ or
-Clang 19+; `#embed` needs GCC 15+ or Clang 19+ and is detected at compile
-time, so an older compiler skips that one koan rather than failing.
+Your compiler predates C23. You need **GCC 15+** or **Clang 19+**.
 
 ```sh
 cc --version          # what you have
@@ -14,8 +10,8 @@ cc --version          # what you have
 
 | Platform | Fix |
 |---|---|
-| macOS | `xcode-select --install`, or `brew install gcc` then `make CC=gcc-14` |
-| Debian/Ubuntu | `sudo apt install gcc-14` then `make CC=gcc-14` |
+| macOS | `brew install llvm` and put it on your PATH, or `brew install gcc` then `make CC=gcc-15` |
+| Debian/Ubuntu | `sudo apt install gcc-15` then `make CC=gcc-15` |
 | Fedora | `sudo dnf install gcc` |
 | Arch | `sudo pacman -S gcc` |
 

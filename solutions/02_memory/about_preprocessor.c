@@ -155,12 +155,11 @@ KOAN(conditional_compilation_selects_before_compiling)
 
 /*
  * Predefined macros describe the translation itself. __STDC_VERSION__ is how
- * you detect the language level: 202311L is C23, though compilers that shipped
- * it before ratification report the draft value 202000L — see about_compiling.
+ * you detect the language level; 202311L means C23.
  */
 KOAN(predefined_macros_describe_the_translation)
 {
-    KOAN_TRUE(__STDC_VERSION__ >= 202000L);
+    KOAN_TRUE(__STDC_VERSION__ >= 202311L);
 
     /* __LINE__ and __FILE__ are how the koan runner reports where you are. */
     int line_here = __LINE__;

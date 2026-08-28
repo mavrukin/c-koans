@@ -264,11 +264,11 @@ KOAN(embed_includes_binary_data)
     KOAN_EQ_SZ(/*__SZ*/ 18, sizeof greeting);   /* 17 bytes plus our NUL */
 #else
     /*
-     * Your compiler predates #embed, so the koan cannot be asked and passes
-     * unanswered. The feature is real and worth reading about above; a newer
-     * compiler will turn this into a genuine exercise.
+     * No #embed. Every compiler this repository supports has it, so reaching
+     * here means the toolchain is older than the README requires — which is a
+     * failure worth reporting rather than a koan worth skipping.
      */
-    KOAN_TRUE(true);
+    KOAN_FAIL("this compiler has no #embed; these koans need GCC 15+ or Clang 19+");
 #endif
 }
 

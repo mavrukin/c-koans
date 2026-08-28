@@ -4,15 +4,13 @@ on:
   push:
   pull_request:
 
-# C23 support is uneven across compiler versions, so the matrix pins versions
-# that actually implement it rather than whatever the runner ships:
+# The koans target ISO C23 strictly: __STDC_VERSION__ must be 202311L, the
+# ratified value. Compilers that shipped C23 before ratification report the
+# draft 202000L and are not supported — GCC 14 is the notable one.
 #
-#   constexpr, auto      GCC 13+ / Clang 19+
-#   typeof_unqual        GCC 14+ / Clang 17+
-#   #embed               GCC 15+ / Clang 19+   (guarded by __has_embed)
-#
-# Apple Clang on the macOS runners lags upstream, so macOS installs LLVM from
-# Homebrew instead of using the Xcode compiler.
+# ubuntu-26.04 preinstalls GCC 15 and Clang 20/21/22, so no package
+# installation is needed on Linux at all. macOS installs LLVM from Homebrew
+# because Xcode's Clang lags upstream.
 
 jobs:
   solutions:
@@ -22,46 +20,44 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-24.04, name: "linux / gcc-14",  cc: gcc-14,  install: apt }
-          - { os: ubuntu-24.04, name: "linux / clang-19", cc: clang-19, install: llvm }
-          - { os: macos-15,    name: "macos / clang",    cc: clang,   install: brew }
+          - { os: ubuntu-26.04, name: "linux / gcc-15",   cc: gcc-15,   brew: false }
+          - { os: ubuntu-26.04, name: "linux / clang-22", cc: clang-22, brew: false }
+          - { os: macos-15,     name: "macos / clang",    cc: clang,    brew: true }
+
+    env:
+      CC: ${{ matrix.cc }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install GCC
-        if: matrix.install == 'apt'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ${{ matrix.cc }}
-
-      - name: Install Clang from apt.llvm.org
-        if: matrix.install == 'llvm'
-        run: |
-          wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 19
-          sudo apt-get install -y clang-19
-
       - name: Install LLVM from Homebrew
-        if: matrix.install == 'brew'
+        if: matrix.brew
         run: |
           brew install llvm
           echo "$(brew --prefix llvm)/bin" >> "$GITHUB_PATH"
 
-      - name: Compiler version
+      # Fail loudly and early if the compiler is too old, rather than letting
+      # a koan fail later with a confusing message.
+      - name: Compiler reports ratified C23
         run: |
-          ${{ matrix.cc }} --version
-          ${{ matrix.cc }} -std=c23 -dM -E -x c /dev/null | grep -E '__STDC_VERSION__'
+          $CC --version
+          version=$($CC -std=c23 -dM -E -x c /dev/null | awk '/__STDC_VERSION__/ {print $3}')
+          echo "__STDC_VERSION__ = $version"
+          case "$version" in
+            202311L) echo "ratified C23: ok" ;;
+            *) echo "::error::$CC reports $version; these koans require 202311L"; exit 1 ;;
+          esac
 
       - name: koans/ is in sync with solutions/
         run: python3 tools/genkoans.py --check
 
       - name: Reference solutions all pass
-        run: make check CC=${{ matrix.cc }}
+        run: make check
 
       - name: Solutions build without warnings
         run: |
           make clean
-          make check CC=${{ matrix.cc }} 2>&1 | tee build.log
+          make check 2>&1 | tee build.log
           if grep -qiE '\bwarning\b' build.log; then
             echo "::error::the solutions must build without warnings"
             grep -iE '\bwarning\b' build.log
@@ -71,7 +67,7 @@ jobs:
       - name: Solutions pass under sanitizers
         run: |
           make clean
-          make san-check CC=${{ matrix.cc }}
+          make san-check
 
       # Two separate assertions, deliberately. If this were a single "does
       # make fail?" check, a compile error in koans/ would be indistinguishable
@@ -80,21 +76,21 @@ jobs:
       - name: Unsolved koans compile, then fail
         run: |
           make clean
-          make build/bin/koans CC=${{ matrix.cc }}
-          make check-unsolved CC=${{ matrix.cc }}
+          make build/bin/koans
+          make check-unsolved
 
       - name: Capstone projects build
-        run: make -C projects all CC=${{ matrix.cc }}
+        run: make -C projects all
 
       - name: Capstone library self-checks
-        run: make -C projects check CC=${{ matrix.cc }}
+        run: make -C projects check
 
       - name: Capstone self-checks under sanitizers
-        run: make -C projects san CC=${{ matrix.cc }}
+        run: make -C projects san
 
       - name: Web server serves, and refuses traversal
         run: |
-          make -C projects all CC=${{ matrix.cc }}
+          make -C projects all
           ./projects/build/koanhttpd --port 8137 --root projects/webserver/www &
           SERVER_PID=$!
           sleep 2
