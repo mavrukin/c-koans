@@ -34,6 +34,11 @@ KOAN_ENTRY(about_translation_units)
 
 KOAN_GROUP("Tier 3 \xc2\xb7 Modern C23")
 KOAN_ENTRY(about_c23_features)
+KOAN_ENTRY(about_generic)
+KOAN_ENTRY(about_bit_manipulation)
+KOAN_ENTRY(about_alignment)
+KOAN_ENTRY(about_floating_point)
+KOAN_ENTRY(about_initialisation)
 
 KOAN_GROUP("Tier 5 \xc2\xb7 POSIX")
 KOAN_ENTRY(about_processes)

@@ -72,13 +72,22 @@ $(BUILD)/%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -MMD -MP -c -o $@ $<
 
+# Sanitized builds go in their own tree. Object files compiled with
+# -fsanitize cannot be linked without it, so sharing a directory with the
+# normal build produces baffling "undefined __asan_*" link errors.
+SAN_CFLAGS  := -std=c23 -g -O1 $(WARNINGS) -Iinclude -Ikoans \
+               -fsanitize=address,undefined -fno-omit-frame-pointer
+SAN_LDFLAGS := -fsanitize=address,undefined
+
 .PHONY: san
 san:
-	@$(MAKE) --no-print-directory clean
-	@$(MAKE) --no-print-directory walk \
-	    CFLAGS="-std=c23 -g -O1 $(WARNINGS) -Iinclude -Ikoans \
-	            -fsanitize=address,undefined -fno-omit-frame-pointer" \
-	    LDFLAGS="-fsanitize=address,undefined"
+	@$(MAKE) --no-print-directory walk BUILD=$(BUILD)/san \
+	    CFLAGS="$(SAN_CFLAGS)" LDFLAGS="$(SAN_LDFLAGS)"
+
+.PHONY: san-check
+san-check:
+	@$(MAKE) --no-print-directory check BUILD=$(BUILD)/san \
+	    CFLAGS="$(SAN_CFLAGS)" LDFLAGS="$(SAN_LDFLAGS)"
 
 .PHONY: projects
 projects:
