@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>koanhttpd</title>
+<style>body{font-family:system-ui,sans-serif;max-width:40rem;margin:4rem auto;padding:0 1rem;line-height:1.6}
+code{background:#f4f4f4;padding:.1rem .3rem;border-radius:3px}</style></head>
+<body>
+<h1>koanhttpd</h1>
+<p>You wrote this server. It is serving this file from disk over a socket it
+opened, parsed the request that asked for it, and handed the work to one of
+four worker threads.</p>
+<ul>
+  <li><a href="/hello.txt">a static text file</a></li>
+  <li><a href="/cgi-bin/env.cgi?name=koan">a CGI program</a></li>
+  <li><a href="/nope">a 404</a></li>
+</ul>
+<p>Every technique in <code>server.c</code> came from a koan you solved.</p>
+</body>
+</html>

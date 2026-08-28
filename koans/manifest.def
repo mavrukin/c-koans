@@ -1,0 +1,36 @@
+/*
+ * manifest.def — the curriculum, in order.
+ *
+ * This file is an "X-macro" list. It is included more than once, each time
+ * with KOAN_GROUP and KOAN_ENTRY defined to mean something different: once to
+ * declare the lesson symbols, once to build the dispatch table. One list,
+ * two expansions, no possibility of the two drifting apart.
+ *
+ * You will write an X-macro yourself in about_preprocessor. Until then, know
+ * that this is a genuine, load-bearing C idiom and not a trick.
+ *
+ * Order matters. Each lesson assumes everything above it.
+ */
+
+KOAN_GROUP("Tier 1 \xc2\xb7 Foundations")
+KOAN_ENTRY(about_asserts)
+KOAN_ENTRY(about_types)
+KOAN_ENTRY(about_operators)
+KOAN_ENTRY(about_control_flow)
+KOAN_ENTRY(about_functions)
+KOAN_ENTRY(about_arrays)
+KOAN_ENTRY(about_pointers)
+KOAN_ENTRY(about_strings)
+KOAN_ENTRY(about_structs)
+
+KOAN_GROUP("Tier 2 \xc2\xb7 Memory and Composition")
+KOAN_ENTRY(about_dynamic_memory)
+KOAN_ENTRY(about_function_pointers)
+KOAN_ENTRY(about_preprocessor)
+
+KOAN_GROUP("Tier 3 \xc2\xb7 Modern C23")
+KOAN_ENTRY(about_c23_features)
+
+KOAN_GROUP("Tier 5 \xc2\xb7 POSIX")
+KOAN_ENTRY(about_processes)
+KOAN_ENTRY(about_threads)

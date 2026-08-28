@@ -1,0 +1,56 @@
+name: koans
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  solutions:
+    name: ${{ matrix.os }} / ${{ matrix.cc }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-24.04, cc: gcc-14 }
+          - { os: ubuntu-24.04, cc: clang-18 }
+          - { os: macos-15,     cc: clang }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install compiler
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ${{ matrix.cc }}
+
+      - name: Compiler version
+        run: ${{ matrix.cc }} --version
+
+      - name: koans/ is in sync with solutions/
+        run: python3 tools/genkoans.py --check
+
+      - name: Reference solutions all pass
+        run: make check CC=${{ matrix.cc }}
+
+      - name: Solutions pass under sanitizers
+        run: |
+          make clean
+          make check CC=${{ matrix.cc }} \
+            CFLAGS="-std=c23 -g -O1 -Wall -Wextra -Iinclude -Ikoans \
+                    -Wno-reserved-identifier -Wno-reserved-macro-identifier \
+                    -fsanitize=address,undefined -fno-omit-frame-pointer" \
+            LDFLAGS="-fsanitize=address,undefined"
+
+      # Two separate assertions, deliberately. If this were a single "does
+      # make fail?" check, a compile error in koans/ would be indistinguishable
+      # from "the koans are unsolved" — and a generator bug could ship koans
+      # that already pass. The build must succeed; only the run may fail.
+      - name: Unsolved koans compile, then fail
+        run: |
+          make clean
+          make build/bin/koans CC=${{ matrix.cc }}
+          make check-unsolved CC=${{ matrix.cc }}
+
+      - name: Capstone projects build
+        run: make projects CC=${{ matrix.cc }}

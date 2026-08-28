@@ -1,0 +1,12 @@
+build/
+*.o
+*.d
+*.dSYM/
+a.out
+core
+.DS_Store
+compile_commands.json
+.cache/
+
+# Built by projects/Makefile into the document root so the server can run it
+projects/webserver/www/cgi-bin/env.cgi
