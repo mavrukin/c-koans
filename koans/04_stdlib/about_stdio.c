@@ -72,9 +72,11 @@ KOAN(buffering_decides_when_bytes_leave)
 
     fclose(w);                  /* fclose flushes before it closes */
 
-    FILE *after = fopen(path, "r");
-    fread(seen, 1, sizeof seen - 1, after);
+    FILE  *after = fopen(path, "r");
+    size_t flushed = fread(seen, 1, sizeof seen - 1, after);
     fclose(after);
+
+    KOAN_EQ_SZ(__SZ, flushed);
     KOAN_EQ_STR(__STR, seen);
 
     remove(path);
@@ -93,10 +95,12 @@ KOAN(unbuffered_streams_write_through)
     fputs("immediate", w);
 
     /* No flush, yet it is already there. */
-    FILE *peek = fopen(path, "r");
-    char  seen[32] = {};
-    fread(seen, 1, sizeof seen - 1, peek);
+    FILE  *peek = fopen(path, "r");
+    char   seen[32] = {};
+    size_t got = fread(seen, 1, sizeof seen - 1, peek);
     fclose(peek);
+
+    KOAN_EQ_SZ(__SZ, got);
     KOAN_EQ_STR(__STR, seen);
 
     fclose(w);
@@ -232,10 +236,12 @@ KOAN(remove_and_rename_are_standard_c)
     KOAN_TRUE(fopen(first, "r") == nullptr);
 
     /* ...and the contents moved with the name. */
-    FILE *check = fopen(second, "r");
-    char  buf[32] = {};
-    fread(buf, 1, sizeof buf - 1, check);
+    FILE  *check = fopen(second, "r");
+    char   buf[32] = {};
+    size_t moved = fread(buf, 1, sizeof buf - 1, check);
     fclose(check);
+
+    KOAN_EQ_SZ(__SZ, moved);
     KOAN_EQ_STR(__STR, buf);
 
     KOAN_EQ_INT(__, remove(second));

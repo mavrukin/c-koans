@@ -182,6 +182,25 @@ static size_t count_all_cases(void)
     return n;
 }
 
+/*
+ * Run one koan, returning whether it passed.
+ *
+ * The setjmp lives here rather than in the caller, and that placement is
+ * load-bearing. A local modified between setjmp and longjmp has an
+ * indeterminate value after the jump unless it is volatile — the rule
+ * about_error_handling teaches. Keeping the jump inside a function that holds
+ * no state of its own means the runner's counters, flags and loop indices
+ * never cross it, so none of them need to be volatile.
+ */
+static bool run_case(const koan_case *kase)
+{
+    if (setjmp(koan__escape) == 0) {
+        kase->fn();
+        return true;
+    }
+    return false;
+}
+
 static void list_lessons(void)
 {
     printf("\n  %sThe path%s\n\n", BOLD, RESET);
@@ -281,8 +300,7 @@ int main(int argc, char **argv)
         for (size_t c = 0; c < lesson->ncases; c++) {
             crashing_case = lesson->cases[c].name;
 
-            if (setjmp(koan__escape) == 0) {
-                lesson->cases[c].fn();
+            if (run_case(&lesson->cases[c])) {
                 passed++;
                 printf("    %s+%s %s\n", GREEN, RESET, lesson->cases[c].name);
             } else {

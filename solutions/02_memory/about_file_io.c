@@ -175,11 +175,14 @@ KOAN(output_is_buffered_until_flushed)
 
     fflush(w);
 
-    /* Now it is. */
-    FILE *r2 = fopen(path, "r");
+    /* Now it is. Note that fread's return is checked: glibc marks it
+     * warn_unused_result precisely because ignoring it hides short reads. */
+    FILE  *r2 = fopen(path, "r");
     memset(peek, 0, sizeof peek);
-    fread(peek, 1, sizeof peek - 1, r2);
+    size_t flushed = fread(peek, 1, sizeof peek - 1, r2);
     fclose(r2);
+
+    KOAN_EQ_SZ(/*__SZ*/ 7, flushed);
     KOAN_EQ_STR(/*__STR*/ "written", peek);
 
     fclose(w);
