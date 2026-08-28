@@ -25,8 +25,12 @@ KOAN_ENTRY(about_structs)
 
 KOAN_GROUP("Tier 2 \xc2\xb7 Memory and Composition")
 KOAN_ENTRY(about_dynamic_memory)
+KOAN_ENTRY(about_multidim_arrays)
 KOAN_ENTRY(about_function_pointers)
 KOAN_ENTRY(about_preprocessor)
+KOAN_ENTRY(about_file_io)
+KOAN_ENTRY(about_error_handling)
+KOAN_ENTRY(about_translation_units)
 
 KOAN_GROUP("Tier 3 \xc2\xb7 Modern C23")
 KOAN_ENTRY(about_c23_features)

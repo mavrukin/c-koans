@@ -66,7 +66,8 @@
       KOAN__PRAGMA(clang diagnostic ignored "-Wsizeof-array-argument")        \
       KOAN__PRAGMA(clang diagnostic ignored "-Wsizeof-pointer-div")           \
       KOAN__PRAGMA(clang diagnostic ignored "-Wbitfield-constant-conversion") \
-      KOAN__PRAGMA(clang diagnostic ignored "-Wdeprecated-declarations")
+      KOAN__PRAGMA(clang diagnostic ignored "-Wdeprecated-declarations")      \
+      KOAN__PRAGMA(clang diagnostic ignored "-Wvla")
 #  define KOAN_DELIBERATE_END KOAN__PRAGMA(clang diagnostic pop)
 #elif defined(__GNUC__)
 #  define KOAN__PRAGMA(x) _Pragma(#x)
@@ -81,7 +82,8 @@
       KOAN__PRAGMA(GCC diagnostic ignored "-Wunused-but-set-variable")        \
       KOAN__PRAGMA(GCC diagnostic ignored "-Wsizeof-array-argument")          \
       KOAN__PRAGMA(GCC diagnostic ignored "-Wsizeof-pointer-div")             \
-      KOAN__PRAGMA(GCC diagnostic ignored "-Wdeprecated-declarations")
+      KOAN__PRAGMA(GCC diagnostic ignored "-Wdeprecated-declarations")        \
+      KOAN__PRAGMA(GCC diagnostic ignored "-Wvla")
 #  define KOAN_DELIBERATE_END KOAN__PRAGMA(GCC diagnostic pop)
 #else
 #  define KOAN_DELIBERATE_BEGIN

@@ -158,7 +158,8 @@ def main() -> int:
         rel = src.relative_to(SRC)
         dst = DST / rel
         text = src.read_text(encoding="utf-8")
-        if not MARKER.search(text) and not BLOCK.search(text):
+        expects_blanks = src.name.startswith("about_")
+        if expects_blanks and not MARKER.search(text) and not BLOCK.search(text):
             print(f"warning: {rel} has no blanks", file=sys.stderr)
         body = blank_out(text)
 
