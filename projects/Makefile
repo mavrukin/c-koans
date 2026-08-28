@@ -16,7 +16,15 @@ BUILD   ?= build
 # Each macro is ignored by the platform it does not belong to.
 POSIX_DEFS := -D_DEFAULT_SOURCE -D_DARWIN_C_SOURCE
 
-CFLAGS  ?= -std=c23 -g -O2 -Wall -Wextra -Wno-unused-parameter $(POSIX_DEFS)
+# _FORTIFY_SOURCE turns several library calls into checked versions at -O2.
+# It is on by default on many Linux distributions and off on macOS, which is
+# how a realpath() buffer that was correct on macOS (PATH_MAX 1024) and a real
+# overflow on Linux (PATH_MAX 4096) reached CI. Asking for it explicitly means
+# both platforms check the same things.
+HARDENING := -D_FORTIFY_SOURCE=3
+
+CFLAGS  ?= -std=c23 -g -O2 -Wall -Wextra -Wno-unused-parameter \
+           $(POSIX_DEFS) $(HARDENING)
 LDLIBS  ?= -lpthread
 
 LIB_SRCS := arena/arena.c containers/containers.c json/json.c

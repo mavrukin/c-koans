@@ -247,22 +247,38 @@ static bool resolve_path(const char *root, const char *target,
     char joined[MAX_PATH * 2];
     snprintf(joined, sizeof joined, "%s%s", root, target);
 
-    char real_root[MAX_PATH];
-    char real_target[MAX_PATH];
+    /*
+     * realpath's two-argument form requires a buffer of at least PATH_MAX
+     * bytes, and PATH_MAX is not a number you may assume: it is 1024 on macOS
+     * and 4096 on Linux, and on some systems it is not defined at all. Handing
+     * it anything smaller is a genuine buffer overflow — glibc's fortify
+     * checks catch it at runtime and abort the process.
+     *
+     * Passing null asks realpath to allocate a correctly sized buffer itself.
+     * That is POSIX.1-2008, it removes the assumption entirely, and the only
+     * cost is remembering to free on every path out.
+     */
+    char *real_root   = realpath(root, nullptr);
+    char *real_target = realpath(joined, nullptr);
+    bool  ok = false;
 
-    if (!realpath(root, real_root)) return false;
-    if (!realpath(joined, real_target)) return false;
+    if (real_root && real_target) {
+        size_t root_len = strlen(real_root);
 
-    size_t root_len = strlen(real_root);
-    if (strncmp(real_target, real_root, root_len) != 0) return false;
+        /* The resolved target must sit inside the resolved root, and the
+         * boundary must fall on a separator — otherwise a root of /var/www
+         * would also match /var/www-evil. */
+        if (strncmp(real_target, real_root, root_len) == 0 &&
+            (real_target[root_len] == '\0' || real_target[root_len] == '/') &&
+            strlen(real_target) < cap) {
+            snprintf(out, cap, "%s", real_target);
+            ok = true;
+        }
+    }
 
-    /* Guard against /var/www-evil matching a root of /var/www. */
-    if (real_target[root_len] != '\0' && real_target[root_len] != '/')
-        return false;
-
-    if (strlen(real_target) >= cap) return false;
-    snprintf(out, cap, "%s", real_target);
-    return true;
+    free(real_root);
+    free(real_target);
+    return ok;
 }
 
 static const char *content_type_for(const char *path)
