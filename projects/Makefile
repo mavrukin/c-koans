@@ -11,7 +11,12 @@
 
 CC      ?= cc
 BUILD   ?= build
-CFLAGS  ?= -std=c23 -g -O2 -Wall -Wextra -Wno-unused-parameter
+
+# See the root Makefile: -std=c23 makes glibc hide every POSIX declaration.
+# Each macro is ignored by the platform it does not belong to.
+POSIX_DEFS := -D_DEFAULT_SOURCE -D_DARWIN_C_SOURCE
+
+CFLAGS  ?= -std=c23 -g -O2 -Wall -Wextra -Wno-unused-parameter $(POSIX_DEFS)
 LDLIBS  ?= -lpthread
 
 LIB_SRCS := arena/arena.c containers/containers.c json/json.c
@@ -49,6 +54,7 @@ check: $(TESTS)
 san:
 	@$(MAKE) --no-print-directory check BUILD=$(BUILD)/san \
 	    CFLAGS="-std=c23 -g -O1 -Wall -Wextra -Wno-unused-parameter \
+	            $(POSIX_DEFS) \
 	            -fsanitize=address,undefined -fno-omit-frame-pointer" \
 	    LDLIBS="-lpthread -fsanitize=address,undefined"
 

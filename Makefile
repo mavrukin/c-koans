@@ -24,7 +24,17 @@ ifneq ($(CC_IS_CLANG),0)
 WARNINGS += -Wno-reserved-identifier -Wno-reserved-macro-identifier
 endif
 
-CFLAGS  ?= -std=c23 -g -O0 $(WARNINGS) -Iinclude -Ikoans
+# Feature-test macros. `-std=c23` (rather than `gnu23`) defines __STRICT_ANSI__,
+# and glibc responds by hiding every POSIX declaration — sigaction, fork, socket
+# and the rest. The macOS SDK is permissive by default, which is why this only
+# shows up on Linux.
+#
+# _DEFAULT_SOURCE exposes POSIX.1-2008 on glibc; _DARWIN_C_SOURCE does the same
+# on Apple's SDK. Each is ignored by the platform it does not belong to, so
+# defining both is portable and needs no conditionals.
+POSIX_DEFS := -D_DEFAULT_SOURCE -D_DARWIN_C_SOURCE
+
+CFLAGS  ?= -std=c23 -g -O0 $(WARNINGS) $(POSIX_DEFS) -Iinclude -Ikoans
 LDFLAGS ?=
 LDLIBS  ?= -lm -lpthread
 
@@ -80,7 +90,7 @@ $(BUILD)/%.o: %.c
 # Sanitized builds go in their own tree. Object files compiled with
 # -fsanitize cannot be linked without it, so sharing a directory with the
 # normal build produces baffling "undefined __asan_*" link errors.
-SAN_CFLAGS  := -std=c23 -g -O1 $(WARNINGS) -Iinclude -Ikoans \
+SAN_CFLAGS  := -std=c23 -g -O1 $(WARNINGS) $(POSIX_DEFS) -Iinclude -Ikoans \
                -fsanitize=address,undefined -fno-omit-frame-pointer
 SAN_LDFLAGS := -fsanitize=address,undefined
 
