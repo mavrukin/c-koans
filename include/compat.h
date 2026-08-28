@@ -267,6 +267,30 @@ static inline void cnd_destroy(cnd_t *c) { pthread_cond_destroy(c); }
 #endif /* KOAN_HAS_THREADS_H */
 
 /* ------------------------------------------------------------------ */
+/* <uchar.h> (C23 §7.30) — Unicode character types                     */
+/* ------------------------------------------------------------------ */
+
+#if KOAN_HAS_UCHAR
+#  include <uchar.h>
+#else
+/*
+ * The Apple SDK does not ship <uchar.h>. The types it declares are defined by
+ * the standard in terms of types we already have, so declaring them here is
+ * exact rather than approximate:
+ *
+ *   char8_t   is unsigned char          (C23 7.30)
+ *   char16_t  is uint_least16_t
+ *   char32_t  is uint_least32_t
+ *
+ * These match the types the compiler already gives u8"", u"" and U"" literals,
+ * so the literals and the typedefs agree.
+ */
+typedef unsigned char  char8_t;
+typedef uint_least16_t char16_t;
+typedef uint_least32_t char32_t;
+#endif
+
+/* ------------------------------------------------------------------ */
 /* printf("%b") (C23 §7.23.6.1) — binary conversion                    */
 /* ------------------------------------------------------------------ */
 

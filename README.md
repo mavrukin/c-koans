@@ -115,10 +115,8 @@ Each tier assumes everything above it. The later a koan sits, the more
 features it expects you to combine — by Tier 5 a single exercise may need
 pointers, structs, error handling, and file descriptors at once.
 
-**151 koans across 15 lessons ship today.** Run `make list` for the ordered
-index. The tiers marked *planned* are the roadmap, not the current contents;
-see [docs/CURRICULUM.md](docs/CURRICULUM.md) for exactly what each covers and
-[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) if you would like to write one.
+Run `make list` for the ordered index, and see
+[docs/CURRICULUM.md](docs/CURRICULUM.md) for what each lesson covers.
 
 ### Tier 1 · Foundations and the Toolchain — 12 lessons, 125 koans
 How a `.c` file becomes a binary (preprocess, compile, assemble, link) ·
@@ -132,27 +130,26 @@ Formatted I/O and the toolchain come early on purpose: you should be able to
 write and build a real program that talks to a user before Tier 2.
 See [docs/COMPILING.md](docs/COMPILING.md) for the hands-on `cc` walkthrough.
 
-### Tier 2 · Memory and Composition — 3 of 7 lessons, 24 koans
-Dynamic allocation and ownership · function pointers, `qsort` and vtables ·
-the preprocessor and X-macros
-*Planned:* multidimensional arrays, VLAs and flexible array members ·
-translation units · file I/O · `errno` and `setjmp`
+### Tier 2 · Memory and Composition — 7 lessons
+Dynamic allocation and ownership · multidimensional arrays, VLAs and flexible
+array members · function pointers, `qsort` and vtables · the preprocessor and
+X-macros · translation units and linkage · file I/O · `errno`, `strtol`'s
+three failures and `setjmp`
 
-### Tier 3 · Modern C23 — 1 of 6 lessons, 11 koans
-`bool`, `constexpr`, `static_assert`, `auto`, `typeof`/`typeof_unqual`,
-attributes, `_BitInt`, `<stdckdint.h>` checked arithmetic, `#embed`
-*Planned:* `_Generic` · `<stdbit.h>` · alignment, `restrict` and `volatile` ·
-floating point and IEEE 754 · compound literals
+### Tier 3 · Modern C23 — 6 lessons
+`bool`, `constexpr`, `static_assert`, `auto`, `typeof`, attributes, `_BitInt`,
+`<stdckdint.h>`, `#embed` · `_Generic` · `<stdbit.h>` · alignment, `restrict`
+and `volatile` · IEEE 754 and Kahan summation · compound literals and lifetime
 
-### Tier 4 · The Standard Library — *planned*
-`<stdlib.h>` algorithms · the `str`/`mem` families in depth · streams and
-buffering · time · variadic functions · wide characters and UTF-8 · atomics
+### Tier 4 · The Standard Library
+`<stdlib.h>` conversions, sorting and program control · the `str`/`mem`
+families in depth · streams and buffering · time · variadic functions ·
+UTF-8 and wide characters · atomics and memory ordering
 
-### Tier 5 · POSIX — 2 of 8 lessons, 17 koans
+### Tier 5 · POSIX
 Processes, `fork`/`exec`/`wait`, pipes, `dup2`, signals and masks · pthreads,
-mutexes, condition variables, atomics, `thread_local`, C11 `<threads.h>`
-*Planned:* file descriptors and `stat` · directories · TCP sockets · event
-loops with `poll`
+mutexes, condition variables, atomics, `thread_local`, C11 `<threads.h>` ·
+file descriptors and `stat` · directories · TCP sockets · `poll` event loops
 
 ### Tier 6 · Capstones — the web server ships
 [`projects/webserver`](projects/webserver/server.c) is a complete, working

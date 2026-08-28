@@ -211,6 +211,108 @@ KOAN(getenv_returns_null_when_unset)
     KOAN_TRUE(strlen(path) > 0);
 }
 
+
+/*
+ * Program termination has four doors, and they differ in what they run.
+ *
+ *   return from main   flushes streams, runs atexit handlers
+ *   exit(n)            identical to returning n from main
+ *   quick_exit(n)      runs at_quick_exit handlers only; skips atexit
+ *   _Exit(n)           runs nothing at all; not even stream flushes
+ *   abort()            raises SIGABRT; no cleanup, and the shell sees a crash
+ *
+ * A child process after fork() should almost always use _Exit, so it does not
+ * flush a copy of the parent's buffers a second time.
+ */
+static int exit_handlers_run = 0;
+static void note_exit(void) { exit_handlers_run++; }
+
+KOAN(termination_differs_in_what_it_runs)
+{
+    /* atexit registers a handler; the standard guarantees at least 32 slots,
+     * and they run in reverse order of registration. */
+    KOAN_EQ_INT(__, atexit(note_exit));
+
+    /* It has not run yet — only at termination. */
+    KOAN_EQ_INT(__, exit_handlers_run);
+
+    /* EXIT_SUCCESS and EXIT_FAILURE are the portable status values. Zero is
+     * also success, but 1 is not portably failure. */
+    KOAN_EQ_INT(__, EXIT_SUCCESS);
+    KOAN_TRUE(EXIT_FAILURE != EXIT_SUCCESS);
+}
+
+/*
+ * system() runs a command through the shell and returns an
+ * implementation-defined status. Passing it a null pointer asks a different
+ * question: is a command processor available at all?
+ *
+ * Never build a system() string from untrusted input — the shell will happily
+ * interpret every metacharacter in it. Tier 5 shows fork/exec, which does not
+ * involve a shell and is what you should reach for.
+ */
+KOAN(system_asks_the_shell)
+{
+    /* A null argument tests for a shell rather than running anything. */
+    KOAN_TRUE(system(nullptr) != 0);
+
+    /* A command that succeeds reports zero on every system these koans
+     * target. The exact encoding of other statuses is not portable. */
+    KOAN_EQ_INT(__, system("exit 0"));
+    KOAN_TRUE(system("exit 3") != 0);
+}
+
+/*
+ * The memory functions live here too, and C23 added one worth knowing:
+ * free_sized, which tells the allocator the size it is freeing so it need not
+ * look it up. Where it is missing, plain free is always correct.
+ */
+KOAN(allocation_lives_in_stdlib_too)
+{
+    /* calloc zeroes; malloc does not. Both return null on failure. */
+    int *zeroed = calloc(4, sizeof *zeroed);
+    KOAN_TRUE(zeroed != nullptr);
+    KOAN_EQ_INT(__, zeroed[3]);
+    free(zeroed);
+
+    /* A zero-sized request may return null or a unique pointer; both are
+     * conforming, so never treat null from malloc(0) as failure alone. */
+    void *empty = malloc(0);
+    free(empty);
+
+    /* aligned_alloc requires the size to be a multiple of the alignment. */
+    void *aligned = aligned_alloc(64, 128);
+    KOAN_TRUE(aligned != nullptr);
+    KOAN_EQ_SZ(__SZ, (size_t)((uintptr_t)aligned % 64));
+    free(aligned);
+}
+
+/*
+ * The unsigned and wide conversions round out the strto family. strtoul is
+ * the trap: it accepts a leading minus sign and silently wraps it, so a
+ * "negative" string parses to an enormous number rather than failing.
+ */
+KOAN(strtoul_accepts_a_minus_sign)
+{
+    char *end = nullptr;
+
+    KOAN_EQ_INT(__, (int)strtoul("42", &end, 10));
+
+    /* This is the surprise: it parses, and the result is huge. */
+    errno = 0;
+    unsigned long negative = strtoul("-1", &end, 10);
+    KOAN_EQ_INT(__, errno);              /* not reported as an error */
+    KOAN_TRUE(negative == ULONG_MAX);
+
+    /* So reject the sign yourself before calling it. */
+    const char *input = "-1";
+    bool looks_negative = (input[0] == '-');
+    KOAN_EQ_INT(__, looks_negative);
+
+    /* strtoll and strtoull are the wide forms, with the same contract. */
+    KOAN_TRUE(strtoll("9000000000", &end, 10) == 9000000000LL);
+}
+
 /*
  * Bringing it together.
  *
@@ -279,5 +381,9 @@ KOAN_LESSON(lesson_about_stdlib, "About <stdlib.h>",
     KOAN_CASE(rand_modulo_is_biased),
     KOAN_CASE(div_returns_both_halves),
     KOAN_CASE(getenv_returns_null_when_unset),
+    KOAN_CASE(termination_differs_in_what_it_runs),
+    KOAN_CASE(system_asks_the_shell),
+    KOAN_CASE(allocation_lives_in_stdlib_too),
+    KOAN_CASE(strtoul_accepts_a_minus_sign),
     KOAN_CASE(assembling_a_frequency_table)
 );
