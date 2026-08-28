@@ -120,11 +120,17 @@ index. The tiers marked *planned* are the roadmap, not the current contents;
 see [docs/CURRICULUM.md](docs/CURRICULUM.md) for exactly what each covers and
 [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) if you would like to write one.
 
-### Tier 1 · Foundations — 9 lessons, 99 koans
-Asserts · types, conversions and integer promotion · operators, precedence and
-evaluation order · control flow and `switch` · functions, scope and linkage ·
-arrays and decay · pointers, `const` and lifetime · strings · structs, unions,
-enums and bit-fields
+### Tier 1 · Foundations and the Toolchain — 12 lessons, 125 koans
+How a `.c` file becomes a binary (preprocess, compile, assemble, link) ·
+headers and multi-file builds · types, conversions and integer promotion ·
+operators, precedence and evaluation order · control flow and `switch` ·
+functions, scope and linkage · **printf and formatted output** · arrays and
+decay · pointers, `const` and lifetime · strings · **reading input safely** ·
+structs, unions, enums and bit-fields
+
+Formatted I/O and the toolchain come early on purpose: you should be able to
+write and build a real program that talks to a user before Tier 2.
+See [docs/COMPILING.md](docs/COMPILING.md) for the hands-on `cc` walkthrough.
 
 ### Tier 2 · Memory and Composition — 3 of 7 lessons, 24 koans
 Dynamic allocation and ownership · function pointers, `qsort` and vtables ·
@@ -159,6 +165,8 @@ graceful shutdown. Every technique in it comes from a koan you solved.
 
 ## When you are stuck
 
+0. **Check [docs/COMPILING.md](docs/COMPILING.md)** if the *build* is what is
+   failing rather than a koan.
 1. **Read the comment above the koan.** The answer is nearly always stated
    there, in prose.
 2. **Ask the compiler.** `make san` catches memory errors; warnings are
