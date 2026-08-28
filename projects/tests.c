@@ -6,6 +6,8 @@
  * APIs, and as a demonstration that a C project can be tested without a
  * framework.
  */
+#include <stdalign.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

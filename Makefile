@@ -108,9 +108,18 @@ san-check:
 projects:
 	@$(MAKE) --no-print-directory -C projects
 
+# On success this is quiet; on failure it prints every failing koan. Swallowing
+# the output would mean a CI failure tells you only that something broke.
 .PHONY: check
 check: $(SOLNBIN)
-	@./$(SOLNBIN) --all >/dev/null && echo "solutions: all koans pass"
+	@if ./$(SOLNBIN) --all --no-color > $(BUILD)/check.log 2>&1; then \
+	    echo "solutions: all koans pass"; \
+	else \
+	    echo "solutions: FAILED"; \
+	    grep -E '^    -|^  (lesson|koan|file|assert|expected|actual)' \
+	        $(BUILD)/check.log || cat $(BUILD)/check.log; \
+	    exit 1; \
+	fi
 
 # The koans must COMPILE and then FAIL. Building first is the whole point:
 # a compile error would otherwise look identical to "the koans are unsolved",
