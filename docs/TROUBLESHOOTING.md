@@ -14,6 +14,11 @@ cc --version          # what you have
 | Debian/Ubuntu | `sudo apt install gcc-15` then `make CC=gcc-15` |
 | Fedora | `sudo dnf install gcc` |
 | Arch | `sudo pacman -S gcc` |
+| Windows | `wsl --install -d Ubuntu`, then use the Debian/Ubuntu row inside it |
+
+**Windows note.** MSVC will not build these koans: it has no `/std:c23`, and
+its conformance table stops at C11. Use WSL2, where the full curriculum works
+with real GCC.
 
 Older compilers accept `-std=c2x` for a near-complete C23. If that is all you
 have, most koans will still work:

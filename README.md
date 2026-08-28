@@ -164,15 +164,52 @@ sudo pacman -S base-devel gcc
 </details>
 
 <details>
-<summary><b>Windows (WSL)</b></summary>
+<summary><b>Windows — use WSL2</b></summary>
 
-Tier 5 needs POSIX, so use WSL2:
+**Run these koans under WSL2.** It is Microsoft's own Linux environment, it
+takes one command to install, and every one of the 338 koans works in it —
+including Tier 5 and the web server.
+
+In PowerShell **as Administrator**:
 
 ```powershell
 wsl --install -d Ubuntu
 ```
 
-Then follow the Ubuntu instructions inside WSL.
+Reboot if it asks. Then open the **Ubuntu** app from the Start menu and
+continue entirely inside it:
+
+```sh
+sudo apt update
+sudo apt install -y build-essential gcc-15 git
+git clone https://github.com/mavrukin/c-koans.git
+cd c-koans
+make CC=gcc-15
+```
+
+**Editing from Windows.** Install VS Code on Windows plus the
+[WSL extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-wsl),
+then from your WSL shell:
+
+```sh
+code .
+```
+
+You get the Windows editor you are used to, driving a real Linux toolchain.
+Keep the repository inside the WSL filesystem (`~/c-koans`), not under
+`/mnt/c/` — builds are far slower across the boundary.
+
+**Why not MSVC?** Because Microsoft's C compiler is not a C23 compiler. There
+is no `/std:c23` option — only `c11`, `c17` and `clatest` — and the official
+conformance table stops at C11. VLAs are documented as "not planned",
+`aligned_alloc` as unsupported, and atomics as experimental. Roughly 80% of
+these lessons use something it does not implement. Its C++ support is current;
+its C support is not.
+
+Microsoft *does* ship Clang in the Visual Studio installer, which is a real
+C23 compiler — but Tier 5 needs `fork`, pthreads and Berkeley sockets, which
+Windows does not have at all. WSL2 gives you the whole curriculum instead of
+three quarters of it.
 </details>
 
 Check that it worked:
@@ -422,7 +459,15 @@ koans that provoke a warning deliberately are silenced explicitly. Any warning
 you see is one you introduced — which is exactly the point.
 
 **Does this work on Windows?**
-Tiers 1–4 are pure ISO C and run anywhere. Tier 5 needs POSIX, so use WSL2.
+Yes, through **WSL2** — one command to install, and all 338 koans work
+including Tier 5. See the Windows section under
+[Getting started](#step-1-install-a-c-compiler).
+
+Not with MSVC, though. Microsoft's C compiler has no `/std:c23` option and its
+published conformance table stops at C11: VLAs are "not planned",
+`aligned_alloc` is unsupported, atomics are experimental. Around 80% of these
+lessons use something it does not implement. Tier 5 additionally needs `fork`,
+pthreads and sockets, which Windows does not provide natively at all.
 
 **How is this different from a C book?**
 A book tells you dangling pointers are bad. Here a koan hands you one, and the
