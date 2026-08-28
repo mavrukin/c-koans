@@ -118,9 +118,25 @@ check-all: check check-unsolved
 	@python3 tools/genkoans.py --check
 	@$(MAKE) --no-print-directory -C projects >/dev/null && echo "projects: build"
 
+# Generate compile_commands.json so clangd, VS Code, CLion and Emacs
+# understand the project. Pure shell, so the koans keep their zero-dependency
+# promise — python3 is only needed by maintainers regenerating koans/.
+.PHONY: compiledb
+compiledb:
+	@printf '[\n' > compile_commands.json
+	@first=1; for src in $(CORE_SRCS) $(KOAN_SRCS); do \
+	    if [ $$first -eq 0 ]; then printf ',\n' >> compile_commands.json; fi; \
+	    first=0; \
+	    printf '  {\n    "directory": "%s",\n    "file": "%s",\n    "command": "%s %s -c %s"\n  }' \
+	        "$(CURDIR)" "$(CURDIR)/$$src" "$(CC)" "$(CFLAGS)" "$$src" \
+	        >> compile_commands.json; \
+	done
+	@printf '\n]\n' >> compile_commands.json
+	@echo "wrote compile_commands.json ($$(grep -c '"file"' compile_commands.json) entries)"
+
 .PHONY: clean
 clean:
-	@rm -rf $(BUILD)
+	@rm -rf $(BUILD) compile_commands.json
 	@$(MAKE) --no-print-directory -C projects clean 2>/dev/null || true
 
 -include $(shell find $(BUILD) -name '*.d' 2>/dev/null)

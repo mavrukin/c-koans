@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run the koans",
+      "type": "shell",
+      "command": "make",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$gcc"],
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
+    },
+    {
+      "label": "Run the koans (sanitized)",
+      "type": "shell",
+      "command": "make san",
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "List lessons",
+      "type": "shell",
+      "command": "make list",
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate compile_commands.json",
+      "type": "shell",
+      "command": "make compiledb",
+      "problemMatcher": []
+    }
+  ]
+}
