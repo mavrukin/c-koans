@@ -54,3 +54,9 @@ jobs:
 
       - name: Capstone projects build
         run: make projects CC=${{ matrix.cc }}
+
+      - name: Capstone library self-checks
+        run: make -C projects check CC=${{ matrix.cc }}
+
+      - name: Capstone self-checks under sanitizers
+        run: make -C projects san CC=${{ matrix.cc }}
