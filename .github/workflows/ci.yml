@@ -76,10 +76,13 @@ jobs:
       - name: Solutions build without warnings
         run: |
           make clean
-          make check 2>&1 | tee build.log
-          if grep -qiE '\bwarning\b' build.log; then
+          # Outside the repo, so it cannot be mistaken for a stray artifact by
+          # the working-tree check below.
+          log="$RUNNER_TEMP/build.log"
+          make check 2>&1 | tee "$log"
+          if grep -qiE '\bwarning\b' "$log"; then
             echo "::error::the solutions must build without warnings"
-            grep -iE '\bwarning\b' build.log
+            grep -iE '\bwarning\b' "$log"
             exit 1
           fi
 
