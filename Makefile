@@ -14,10 +14,15 @@
 CC      ?= cc
 BUILD   ?= build
 
-# -Wno-reserved-identifier: the `__` blank is a deliberate exception, see koan.h
-WARNINGS := -Wall -Wextra -Wpedantic -Wshadow -Wvla \
-            -Wno-unused-parameter -Wno-reserved-identifier \
-            -Wno-reserved-macro-identifier
+WARNINGS := -Wall -Wextra -Wpedantic -Wshadow -Wvla -Wno-unused-parameter
+
+# The `__` blank is a deliberate exception (see koan.h), but only Clang
+# diagnoses reserved identifiers — passing these to GCC just makes it complain
+# about flags it does not recognise.
+CC_IS_CLANG := $(shell $(CC) --version 2>/dev/null | grep -ci clang)
+ifneq ($(CC_IS_CLANG),0)
+WARNINGS += -Wno-reserved-identifier -Wno-reserved-macro-identifier
+endif
 
 CFLAGS  ?= -std=c23 -g -O0 $(WARNINGS) -Iinclude -Ikoans
 LDFLAGS ?=

@@ -47,10 +47,12 @@ KOAN(integer_sizes_are_ordered_not_fixed)
     KOAN_TRUE(sizeof(int) <= sizeof(long));
     KOAN_TRUE(sizeof(long) <= sizeof(long long));
 
-    /* And the minimum widths the standard does guarantee: */
-    KOAN_TRUE(sizeof(short) * CHAR_BIT >= /*__*/ 16);
-    KOAN_TRUE(sizeof(long) * CHAR_BIT >= /*__*/ 32);
-    KOAN_TRUE(sizeof(long long) * CHAR_BIT >= /*__*/ 64);
+    /* And the minimum widths the standard does guarantee. The cast is not
+     * decoration: sizeof yields size_t, and comparing it against a signed
+     * int is the conversion trap this lesson is about. */
+    KOAN_TRUE(sizeof(short) * CHAR_BIT >= (size_t)/*__*/ 16);
+    KOAN_TRUE(sizeof(long) * CHAR_BIT >= (size_t)/*__*/ 32);
+    KOAN_TRUE(sizeof(long long) * CHAR_BIT >= (size_t)/*__*/ 64);
 }
 
 /*

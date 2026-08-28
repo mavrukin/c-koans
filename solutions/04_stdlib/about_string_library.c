@@ -27,7 +27,9 @@ KOAN(strncpy_does_not_always_terminate)
     KOAN_EQ_CHR(/*__CHR*/ '\0', padded[7]);     /* padded all the way out */
 
     char truncated[4];
+KOAN_DELIBERATE_BEGIN
     strncpy(truncated, "abcdefgh", sizeof truncated);
+KOAN_DELIBERATE_END
     KOAN_EQ_CHR(/*__CHR*/ 'a', truncated[0]);
     KOAN_EQ_CHR(/*__CHR*/ 'd', truncated[3]);   /* no NUL: not a string */
 

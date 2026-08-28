@@ -83,7 +83,9 @@ KOAN(snprintf_is_the_safe_way_to_build_strings)
 {
     char small[8];
 
+KOAN_DELIBERATE_BEGIN
     int wanted = snprintf(small, sizeof small, "%s-%d", "abcdefgh", 42);
+KOAN_DELIBERATE_END
 
     /* The result is truncated but always terminated. */
     KOAN_EQ_SZ(/*__SZ*/ 7, strlen(small));

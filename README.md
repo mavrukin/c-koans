@@ -101,6 +101,7 @@ make FROM=about_structs     # start partway along
 make all-koans        # do not stop at the first failure
 make san              # rebuild with AddressSanitizer + UBSan
 make solutions        # run the reference answers
+make check-all        # everything CI runs
 make clean
 ```
 
@@ -115,8 +116,9 @@ Each tier assumes everything above it. The later a koan sits, the more
 features it expects you to combine — by Tier 5 a single exercise may need
 pointers, structs, error handling, and file descriptors at once.
 
-Run `make list` for the ordered index, and see
-[docs/CURRICULUM.md](docs/CURRICULUM.md) for what each lesson covers.
+**38 lessons, 338 koans, 4 capstone projects.** Run `make list` for the
+ordered index, and see [docs/CURRICULUM.md](docs/CURRICULUM.md) for what each
+lesson covers.
 
 ### Tier 1 · Foundations and the Toolchain — 12 lessons, 125 koans
 How a `.c` file becomes a binary (preprocess, compile, assemble, link) ·
@@ -130,33 +132,38 @@ Formatted I/O and the toolchain come early on purpose: you should be able to
 write and build a real program that talks to a user before Tier 2.
 See [docs/COMPILING.md](docs/COMPILING.md) for the hands-on `cc` walkthrough.
 
-### Tier 2 · Memory and Composition — 7 lessons
+### Tier 2 · Memory and Composition — 7 lessons, 55 koans
 Dynamic allocation and ownership · multidimensional arrays, VLAs and flexible
 array members · function pointers, `qsort` and vtables · the preprocessor and
 X-macros · translation units and linkage · file I/O · `errno`, `strtol`'s
 three failures and `setjmp`
 
-### Tier 3 · Modern C23 — 6 lessons
+### Tier 3 · Modern C23 — 6 lessons, 49 koans
 `bool`, `constexpr`, `static_assert`, `auto`, `typeof`, attributes, `_BitInt`,
 `<stdckdint.h>`, `#embed` · `_Generic` · `<stdbit.h>` · alignment, `restrict`
 and `volatile` · IEEE 754 and Kahan summation · compound literals and lifetime
 
-### Tier 4 · The Standard Library
+### Tier 4 · The Standard Library — 7 lessons, 62 koans
 `<stdlib.h>` conversions, sorting and program control · the `str`/`mem`
 families in depth · streams and buffering · time · variadic functions ·
 UTF-8 and wide characters · atomics and memory ordering
 
-### Tier 5 · POSIX
+### Tier 5 · POSIX — 6 lessons, 47 koans
 Processes, `fork`/`exec`/`wait`, pipes, `dup2`, signals and masks · pthreads,
 mutexes, condition variables, atomics, `thread_local`, C11 `<threads.h>` ·
 file descriptors and `stat` · directories · TCP sockets · `poll` event loops
 
-### Tier 6 · Capstones — the web server ships
-[`projects/webserver`](projects/webserver/server.c) is a complete, working
-HTTP/1.1 server: a thread pool over a bounded queue, static files, CGI via
-fork/exec/dup2, percent-decoding, `realpath`-based traversal defence, and
-graceful shutdown. Every technique in it comes from a koan you solved.
-*Planned:* arena allocator · generic containers with `_Generic` · JSON parser
+### Tier 6 · Capstones — 4 complete programs
+Working code in [`projects/`](projects), not exercises with the middle removed:
+an **arena allocator**, a **generic container library** (`Vec` and a hash
+`Map`), a **JSON parser** with full escape handling and precise errors, and an
+**HTTP/1.1 server** with a thread pool, CGI, and traversal defence. Every
+technique in them comes from a koan you solved.
+
+```sh
+make -C projects check    # 701 self-checks across the three libraries
+make -C projects run      # start the web server on :8080
+```
 
 ---
 

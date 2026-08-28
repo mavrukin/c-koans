@@ -181,11 +181,16 @@ KOAN(clock_measures_processor_time)
 
     clock_t start = clock();
 
-    /* Do enough work to be measurable but not slow. */
+    /* Do enough work to be measurable but not slow. `volatile` stops the
+     * compiler deleting the loop, which it is otherwise entitled to do. */
     volatile long sink = 0;
     for (long i = 0; i < 2000000; i++) sink += i;
 
     clock_t end = clock();
+
+    /* Use the result, so the loop cannot be optimised away on that ground
+     * either: the sum of 0..1999999. */
+    KOAN_EQ_INT(__, sink == 1999999L * 2000000L / 2);
 
     KOAN_TRUE(end >= start);
     double seconds = (double)(end - start) / CLOCKS_PER_SEC;

@@ -168,11 +168,15 @@ KOAN(assert_is_for_impossible_states_not_bad_input)
  */
 static jmp_buf escape_hatch;
 
+KOAN_DELIBERATE_BEGIN
 static void fail_deep(int depth)
 {
+    /* Not infinite — the longjmp leaves the whole recursion at once, which
+     * is precisely what the compiler's recursion analysis cannot see. */
     if (depth == 0) longjmp(escape_hatch, 42);
     fail_deep(depth - 1);
 }
+KOAN_DELIBERATE_END
 
 KOAN(setjmp_saves_a_place_to_return_to)
 {

@@ -142,7 +142,9 @@ KOAN(snprintf_reports_what_it_wanted_to_write)
 {
     char small[8];
 
+KOAN_DELIBERATE_BEGIN
     int wanted = snprintf(small, sizeof small, "%s", "abcdefghij");
+KOAN_DELIBERATE_END
     KOAN_EQ_INT(__, wanted);
     KOAN_EQ_STR(__STR, small);
     KOAN_TRUE((size_t)wanted >= sizeof small);      /* truncated */

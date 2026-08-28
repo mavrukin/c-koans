@@ -117,6 +117,7 @@ KOAN(switch_cases_fall_through)
 {
     int reached = 0;
 
+KOAN_DELIBERATE_BEGIN
     switch (2) {
         case 1: reached += 1;      /* not reached */
         case 2: reached += 10;     /* entry point, then falls through */
@@ -124,6 +125,7 @@ KOAN(switch_cases_fall_through)
                 break;
         case 4: reached += 1000;
     }
+KOAN_DELIBERATE_END
 
     KOAN_EQ_INT(__, reached);
 }
