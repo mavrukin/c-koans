@@ -8,9 +8,10 @@ on:
 # ratified value. Compilers that shipped C23 before ratification report the
 # draft 202000L and are not supported — GCC 14 is the notable one.
 #
-# ubuntu-26.04 preinstalls GCC 15 and Clang 20/21/22, so no package
-# installation is needed on Linux at all. macOS installs LLVM from Homebrew
-# because Xcode's Clang lags upstream.
+# Track the newest released compilers rather than the oldest that might work.
+# ubuntu-26.04 preinstalls Clang 20/21/22 and GCC 15; GCC 16 is one apt install
+# away in universe. macOS installs LLVM from Homebrew because Xcode's Clang
+# lags upstream.
 
 jobs:
   solutions:
@@ -20,15 +21,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-26.04, name: "linux / gcc-15",   cc: gcc-15,   brew: false }
-          - { os: ubuntu-26.04, name: "linux / clang-22", cc: clang-22, brew: false }
-          - { os: macos-15,     name: "macos / clang",    cc: clang,    brew: true }
+          - { os: ubuntu-26.04, name: "linux / gcc-16",   cc: gcc-16,   apt: gcc-16 }
+          - { os: ubuntu-26.04, name: "linux / clang-22", cc: clang-22, apt: "" }
+          - { os: macos-15,     name: "macos / clang",    cc: clang,    apt: "", brew: true }
 
     env:
       CC: ${{ matrix.cc }}
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install compiler from apt
+        if: matrix.apt != ''
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ${{ matrix.apt }}
 
       - name: Install LLVM from Homebrew
         if: matrix.brew
