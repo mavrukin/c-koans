@@ -66,13 +66,23 @@ KOAN(the_preprocessor_knows_where_it_is)
 }
 
 /*
- * `-std=` selects the language the compiler accepts. __STDC_VERSION__ reports
- * which one you got: 202311L is C23. If this koan surprises you, check the
- * -std flag in the Makefile.
+ * `-std=` selects the language the compiler accepts, and __STDC_VERSION__
+ * reports which one you got. The values are a date: C11 is 201112L, C17 is
+ * 201710L, and the ratified C23 is 202311L.
+ *
+ * There is a wrinkle worth knowing, because it will bite you in a real
+ * feature check. Compilers that implemented C23 before it was ratified report
+ * the draft value 202000L and never updated it — GCC 14 does exactly this,
+ * while GCC 15 and Clang 19 report 202311L. So a portable test asks for "at
+ * least C23-era", not equality with 202311L.
  */
 KOAN(the_standard_version_is_a_compile_time_fact)
 {
-    KOAN_TRUE(__STDC_VERSION__ >= 202311L);
+    /* True on every compiler this repository supports. */
+    KOAN_TRUE(__STDC_VERSION__ >= 202000L);
+
+    /* And unambiguously newer than C17, whichever value your compiler picked. */
+    KOAN_TRUE(__STDC_VERSION__ > __);
 
     /* __STDC__ is 1 in any conforming implementation. */
     KOAN_EQ_INT(__, __STDC__);
