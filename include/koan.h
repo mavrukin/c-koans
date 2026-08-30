@@ -10,7 +10,8 @@
  * THE BLANKS
  * ----------
  * Koans are filled in by replacing a blank with the value you believe is
- * correct. Blanks are typed, because C is typed:
+ * correct. Blanks are typed, because C is typed. Each is introduced by the
+ * lesson that first needs it, once the type behind it has been explained:
  *
  *     __        an int          KOAN_EQ_INT(__, 1 + 1);
  *     __SZ      a size_t        KOAN_EQ_SZ(__SZ, sizeof(int));

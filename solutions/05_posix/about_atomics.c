@@ -1,6 +1,10 @@
 /*
  * About Atomics and the Memory Model
  *
+ * <stdatomic.h> is a standard library header, but it sits here rather than in
+ * Tier 4 because it is meaningless without threads: an operation being
+ * indivisible only matters when something else could interrupt it.
+ *
  * about_threads used atomics as a faster counter. This lesson is about what
  * they actually guarantee, which is two separate things people conflate:
  *

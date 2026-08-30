@@ -17,8 +17,19 @@
 #include <stdint.h>
 
 /*
- * sizeof yields the size in bytes, as a size_t. By definition sizeof(char)
- * is 1: a char is the unit C measures everything else in.
+ * `sizeof` asks how many bytes a type occupies. It is not a function — it is
+ * built into the language, and the compiler works out the answer while
+ * building the program.
+ *
+ * What it gives back is not an int but a `size_t`: the type C uses for sizes
+ * and counts. It can never be negative, because nothing has a negative size.
+ *
+ * That is a new type, so it has its own blank: `__SZ`. You write the number
+ * exactly as you would an int; the blank simply records that the value is a
+ * size, so the runner compares it as one.
+ *
+ * By definition sizeof(char) is 1: a char is the unit C measures everything
+ * else in.
  */
 KOAN(char_is_the_unit_of_size)
 {
@@ -179,6 +190,35 @@ KOAN(float_to_int_truncates)
 }
 
 /*
+ * Numbers with a fractional part have the type `double`. 1.5, 0.25 and -3.75
+ * are all doubles.
+ *
+ * A double stores its value in binary, and not every decimal fraction has an
+ * exact binary form — 0.1 does not, in the same way that 1/3 has no exact
+ * decimal form. Two calculations that ought to agree can therefore differ in
+ * the last few bits.
+ *
+ * So doubles are compared with a *tolerance*: how far apart two values may be
+ * while still counting as equal. The blank for a double is `__DBL`, and the
+ * third argument to KOAN_EQ_DBL is that tolerance — 1e-9 means one billionth.
+ */
+KOAN(doubles_hold_fractions_and_compare_with_a_tolerance)
+{
+    /* These two are exact in binary, so the tolerance is not even needed. */
+    KOAN_EQ_DBL(__DBL, 0.5 + 0.25, 1e-9);
+    KOAN_EQ_DBL(__DBL, 5.0 / 2.0, 1e-9);
+
+    /* This one is not exact. The sum is a hair away from 0.3, which the
+     * tolerance absorbs — and which exact comparison would not. */
+    KOAN_EQ_DBL(__DBL, 0.1 + 0.2, 1e-9);
+    KOAN_FALSE(0.1 + 0.2 == 0.3);
+
+    /* Dividing two ints throws the fraction away; dividing doubles keeps it. */
+    KOAN_EQ_INT(__, 5 / 2);
+    KOAN_EQ_DBL(__DBL, 5.0 / 2.0, 1e-9);
+}
+
+/*
  * A character constant like 'A' has type int in C — not char. This differs
  * from C++, and it is why sizeof('A') surprises people.
  */
@@ -221,6 +261,7 @@ KOAN_LESSON(lesson_about_types, "About Types",
     KOAN_CASE(mixing_signed_and_unsigned_converts_toward_unsigned),
     KOAN_CASE(division_truncates_toward_zero),
     KOAN_CASE(float_to_int_truncates),
+    KOAN_CASE(doubles_hold_fractions_and_compare_with_a_tolerance),
     KOAN_CASE(character_constants_are_ints),
     KOAN_CASE(the_size_t_trap)
 );

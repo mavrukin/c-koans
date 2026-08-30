@@ -261,17 +261,22 @@ KOAN(asserting_truth)
 Replace `__BOOL` with `true`, save, and run `make` again. That is the whole
 loop — repeat it 338 times and you will know C.
 
-**Blanks are typed**, because C is typed:
+**Blanks are typed**, because C is typed. You do not need to learn these up
+front — each one is introduced by the lesson that first needs it, after the
+type behind it has been explained.
 
-| Blank | Type | Example |
+| Blank | Type | Introduced in |
 |---|---|---|
-| `__` | `int` | `KOAN_EQ_INT(__, 1 + 1)` |
-| `__SZ` | `size_t` | `KOAN_EQ_SZ(__SZ, sizeof(int))` |
-| `__DBL` | `double` | `KOAN_EQ_DBL(__DBL, 0.5 + 0.25, 1e-9)` |
-| `__CHR` | `char` | `KOAN_EQ_CHR(__CHR, "abc"[0])` |
-| `__STR` | string | `KOAN_EQ_STR(__STR, greet())` |
-| `__BOOL` | `bool` | `KOAN_TRUE(__BOOL)` |
-| `__PTR` | pointer | `KOAN_EQ_PTR(__PTR, nullptr)` |
+| `__` | `int` | About Asserts |
+| `__BOOL` | `bool` | About Asserts |
+| `__CHR` | `char` | About Asserts |
+| `__STR` | string | About Asserts |
+| `__SZ` | `size_t` | About Types |
+| `__DBL` | `double` | About Types |
+| `__PTR` | pointer | About Pointers |
+
+Nothing in a koan requires knowledge from a later lesson. If you find
+something that does, that is a bug — please report it.
 
 ---
 

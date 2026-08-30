@@ -1,254 +1,243 @@
 /*
  * About Compiling
  *
- * Before you learn what C means, learn what happens to it. A C program
- * becomes a binary in four steps, and every confusing error message you will
- * meet comes from knowing which step produced it.
+ * You have run `make` several times now. This lesson is about what it did.
  *
- *   1. preprocess   #include, #define, #if      -> one big text file
- *   2. compile      that text                   -> assembly
- *   3. assemble     assembly                    -> an object file (.o)
- *   4. link         all the .o files + libraries -> an executable
+ * A C file becomes a running program in four steps. Knowing which step you are
+ * in explains almost every confusing error message you will ever get.
  *
- * Steps 1-3 happen once per .c file, independently. Step 4 happens once.
- * That split explains nearly everything: why headers exist, why a missing
- * semicolon is a *compile* error but a missing function body is a *link*
- * error, and why changing a header rebuilds so much.
+ *   1. preprocess   handle the lines starting with #   -> one big text file
+ *   2. compile      turn that text into instructions   -> assembly
+ *   3. assemble     turn those into machine code       -> an object file (.o)
+ *   4. link         join all the .o files together     -> a program
  *
- * Run each of these yourself — they are the whole lesson:
+ * Steps 1 to 3 happen once per .c file, each on its own, knowing nothing about
+ * the others. Step 4 happens once, over all of them.
+ *
+ * Try it yourself. These four commands do one step each:
  *
  *     cc -std=c23 -E  hello.c -o hello.i    # stop after preprocessing
  *     cc -std=c23 -S  hello.c -o hello.s    # stop after compiling
  *     cc -std=c23 -c  hello.c -o hello.o    # stop after assembling
  *     cc              hello.o -o hello      # link
  *
- * docs/COMPILING.md walks through all of it with real output, including
- * multi-file builds, -I, -l, and what make is actually doing for you.
+ * docs/COMPILING.md walks through all of it with real output, and ends by
+ * explaining the Makefile you have been using.
  */
 #include "koan.h"
 #include "build_demo.h"
 
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-
 /*
- * Step 1 is pure text substitution, and it finishes before the compiler sees
- * anything. A macro has no type and obeys no scope — it is gone by step 2.
+ * Step 1 is the preprocessor, and it is pure text substitution. It runs to
+ * completion before the compiler sees anything.
+ *
+ * `#define` gives a name to some text. Everywhere that name appears afterwards,
+ * the preprocessor replaces it with the text — a find-and-replace, nothing
+ * more. By step 2 the name is gone.
  */
-#define KOAN_BUILD_LABEL "built from source"
+#define KOAN_GREETING "built from source"
+#define KOAN_DOUBLE_OF_SIX 12
 
-KOAN(the_preprocessor_runs_first)
+KOAN(the_preprocessor_replaces_text)
 {
-    KOAN_EQ_STR(/*__STR*/ "built from source", KOAN_BUILD_LABEL);
-
-    /* Adjacent string literals are joined during translation, so this is one
-     * string by the time the program runs. */
-    const char *joined = "one" " " "string";
-    KOAN_EQ_STR(/*__STR*/ "one string", joined);
-    KOAN_EQ_SZ(/*__SZ*/ 10, strlen(joined));
+    KOAN_EQ_STR(/*__STR*/ "built from source", KOAN_GREETING);
+    KOAN_EQ_INT(/*__*/ 12, KOAN_DOUBLE_OF_SIX);
 }
 
 /*
- * The preprocessor fills in facts about the translation itself. __FILE__ and
- * __LINE__ are how every assertion in this repository reports where it is.
+ * The preprocessor also fills in facts about the file it is reading.
+ *
+ * __LINE__ becomes the line number it appears on. __func__ becomes the name of
+ * the koan it sits inside. These are how every failure message in this course
+ * knows where to point you.
  */
 KOAN(the_preprocessor_knows_where_it_is)
 {
-    KOAN_TRUE(strstr(__FILE__, "about_compiling") != nullptr);
-
+    /*
+     * Two lines, one after the other. The second __LINE__ is one greater than
+     * the first, so subtracting them gives the distance between them.
+     */
     int line_here = __LINE__;
-    KOAN_EQ_INT(/*__*/ 1, __LINE__ - line_here);
+    int line_next = __LINE__;
+    KOAN_EQ_INT(/*__*/ 1, line_next - line_here);
 
-    /* __func__ is not a macro — it is a predefined identifier, so it behaves
-     * like a local variable holding the enclosing function's name. */
+    /* The name of the koan you are in, as text. */
     KOAN_EQ_STR(/*__STR*/ "the_preprocessor_knows_where_it_is", __func__);
 }
 
 /*
- * `-std=` selects the language the compiler accepts, and __STDC_VERSION__
- * reports which one you got. The values are a date: C11 is 201112L, C17 is
- * 201710L, and C23 is 202311L.
+ * `#include` is the other half of step 1, and it is equally literal: the
+ * preprocessor replaces the line with the entire contents of the named file.
  *
- * These koans require a compiler that reports the ratified 202311L. A few
- * compilers shipped C23 support before ratification and still report the draft
- * value 202000L; they are too old for this repository. If this koan fails,
- * your compiler is the thing to fix — see docs/TROUBLESHOOTING.md.
+ * That is why a header is described as being *pasted in* rather than imported.
+ * This file includes build_demo.h at the top, so everything build_demo.h
+ * declares is available from that point on — including its macro.
+ */
+KOAN(a_header_is_pasted_in)
+{
+    KOAN_EQ_INT(/*__*/ 42, BUILD_DEMO_MACRO_ANSWER);
+}
+
+/*
+ * Because a header is pasted in, including it twice would paste it twice — and
+ * declaring the same thing twice is an error. Every header therefore guards
+ * itself:
+ *
+ *     #ifndef BUILD_DEMO_H      // if this name is not defined...
+ *     #define BUILD_DEMO_H      // ...define it, and continue
+ *     ...
+ *     #endif
+ *
+ * The second time through, the name is already defined, so everything between
+ * is skipped. Open build_demo.h and you will see exactly that.
+ */
+KOAN(headers_guard_themselves)
+{
+    /* Including it again does nothing at all, because of that guard. */
+#include "build_demo.h"
+    KOAN_EQ_INT(/*__*/ 42, BUILD_DEMO_MACRO_ANSWER);
+}
+
+/*
+ * Steps 2 and 3 turn one .c file into one .o file, in isolation.
+ *
+ * The compiler reading *this* file has never seen build_demo.c. It trusts the
+ * declaration it got from the header, checks that the call matches, and emits
+ * a call to a name it cannot yet resolve.
+ *
+ * The linker resolves that name in step 4. This is why the two most common
+ * errors in C are different errors at different stages:
+ *
+ *   "undeclared identifier"   -> step 2. You forgot the #include.
+ *   "undefined symbol"        -> step 4. The .o holding the body was not
+ *                                given to the linker.
+ *
+ * Same missing function, different fix, depending on which step complained.
+ */
+KOAN(the_linker_joins_separate_files)
+{
+    /* Declared in build_demo.h, defined in build_demo.c, joined at step 4. */
+    KOAN_EQ_INT(/*__*/ 7, build_demo_add(3, 4));
+    KOAN_EQ_INT(/*__*/ 42, build_demo_answer());
+
+    /* The macro from the header and the function from the other file, used
+     * together — one came from step 1, the other from step 4. */
+    KOAN_EQ_INT(/*__*/ 100, build_demo_add(BUILD_DEMO_MACRO_ANSWER, 58));
+}
+
+/*
+ * Some questions are answered while the program is being built, not while it
+ * is running.
+ *
+ * `static_assert` states something that must be true at compile time. If it is
+ * false there is no program at all — the build stops. It costs nothing when
+ * the program runs, because by then it has already been checked.
+ */
+static_assert(BUILD_DEMO_MACRO_ANSWER == 42);
+
+KOAN(some_checks_happen_before_the_program_runs)
+{
+    /* That this koan runs at all proves the assertion above held. */
+    static_assert(1 + 1 == 2);
+    KOAN_TRUE(/*__BOOL*/ true);
+}
+
+/*
+ * The preprocessor can also *remove* code. `#if`, `#else` and `#endif` choose
+ * which lines the compiler is allowed to see; the rest are deleted before
+ * step 2 and never compiled at all.
+ *
+ * This is how one file supports several systems: the branch for the machine
+ * you are not on does not have to work, because it is never compiled.
+ */
+KOAN(unselected_branches_are_never_compiled)
+{
+    int chosen;
+
+#if BUILD_DEMO_MACRO_ANSWER == 42
+    chosen = 1;
+#else
+    chosen = 2;      /* deleted before the compiler sees it */
+#endif
+
+    KOAN_EQ_INT(/*__*/ 1, chosen);
+}
+
+/*
+ * `-std=c23` is the flag that tells the compiler which version of C to accept.
+ * The compiler reports which one it is using through __STDC_VERSION__, a
+ * number that reads as a date: C11 is 201112, C17 is 201710, C23 is 202311.
+ *
+ * These koans require C23. If this one fails, your compiler is too old and
+ * docs/TROUBLESHOOTING.md tells you what to install.
  */
 KOAN(the_standard_version_is_a_compile_time_fact)
 {
     KOAN_TRUE(__STDC_VERSION__ >= /*__*/ 202311L);
 
-    /* Which is emphatically newer than C17. */
+    /* Which is newer than C17. */
     KOAN_TRUE(__STDC_VERSION__ > 201710L);
-
-    /* __STDC__ is 1 in any conforming implementation. */
-    KOAN_EQ_INT(/*__*/ 1, __STDC__);
-}
-
-/*
- * A header is not "imported". It is pasted in, textually, at the point of the
- * #include. Two things follow: an include guard is mandatory, and whatever a
- * header declares is visible to everything after it in that file.
- *
- * `#include <...>` searches the system paths; `#include "..."` searches
- * relative to the current file first. That is the whole difference.
- */
-KOAN(a_header_is_pasted_in_not_imported)
-{
-    /* build_demo.h defined this macro, so it is visible here. */
-    KOAN_EQ_INT(/*__*/ 42, BUILD_DEMO_MACRO_ANSWER);
-
-    /* And this constant, which unlike the macro has a type. */
-    KOAN_EQ_INT(/*__*/ 42, BUILD_DEMO_CONSTEXPR_ANSWER);
-    KOAN_EQ_SZ(/*__SZ*/ sizeof(int), sizeof BUILD_DEMO_CONSTEXPR_ANSWER);
-
-    /* Including it a second time does nothing, because of its guard. */
-#include "build_demo.h"
-    KOAN_EQ_INT(/*__*/ 42, BUILD_DEMO_MACRO_ANSWER);
-
-#ifdef BUILD_DEMO_H
-    KOAN_TRUE(true);
-#else
-    KOAN_FAIL("the include guard should be defined by now");
-#endif
-}
-
-/*
- * Steps 2 and 3 turn one .c file into one .o file, in isolation. The compiler
- * checking this file has never seen build_demo.c — it trusts the declaration
- * in the header and emits a call to a name it cannot resolve.
- *
- * The *linker* resolves that name later. This is why:
- *
- *   "implicit declaration of function"  -> a compile error (no declaration)
- *   "undefined symbol: build_demo_add"  -> a link error (no definition)
- *
- * They are different failures at different stages, and the fix differs:
- * the first needs an #include, the second needs the .o on the link line.
- */
-KOAN(the_linker_joins_separately_compiled_files)
-{
-    /* Declared in build_demo.h, defined in build_demo.c, resolved at link. */
-    KOAN_EQ_INT(/*__*/ 7, build_demo_add(3, 4));
-
-    /* Each translation unit has its own __FILE__, fixed at compile time. */
-    const char *other = build_demo_unit_name();
-    KOAN_TRUE(strstr(other, "build_demo") != nullptr);
-    KOAN_TRUE(strcmp(other, __FILE__) != 0);
-}
-
-/*
- * Some things are decided at compile time and cost nothing at runtime.
- * static_assert is the clearest example: if it fails, there is no program.
- */
-static_assert(sizeof(int) >= 4, "these koans assume a 32-bit int or wider");
-
-KOAN(some_checks_happen_before_the_program_exists)
-{
-    /* That this koan runs at all proves the assertion above held. */
-    static_assert(BUILD_DEMO_CONSTEXPR_ANSWER == 42);
-
-    /* sizeof is computed by the compiler, not by the running program. */
-    KOAN_EQ_SZ(/*__SZ*/ 4, sizeof(int32_t));
-}
-
-/*
- * Conditional compilation removes code before it is ever compiled. The
- * discarded branch need not even be valid C for your target — which is how
- * one source file supports several platforms.
- */
-KOAN(unselected_branches_are_never_compiled)
-{
-    const char *platform;
-
-#if defined(__APPLE__)
-    platform = "apple";
-#elif defined(__linux__)
-    platform = "linux";
-#else
-    platform = "other";
-#endif
-
-    /* Whichever it is, exactly one branch survived. */
-    KOAN_TRUE(strcmp(platform, "apple") == 0 ||
-              strcmp(platform, "linux") == 0 ||
-              strcmp(platform, "other") == 0);
-
-    /* NDEBUG is the flag that strips assert(). The Makefile does not set it,
-     * so assertions are live while you work through the koans. */
-#ifdef NDEBUG
-    KOAN_TRUE(true);
-#else
-    KOAN_TRUE(true);
-#endif
 }
 
 /*
  * Bringing it together.
  *
- * Predict what a build produces. Given these files:
+ * Predict what a build produces, from the rules above. There are three files:
  *
- *     build_demo.h    declarations only
- *     build_demo.c    #include "build_demo.h"   -> build_demo.o
- *     about_compiling.c #include "build_demo.h" -> about_compiling.o
+ *     build_demo.h        declarations only
+ *     build_demo.c        includes the header  -> build_demo.o
+ *     about_compiling.c   includes the header  -> about_compiling.o
  *
- * ...the header is compiled twice (once into each object file), the
- * functions are compiled once, and the linker joins two .o files into one
- * program. Work out each answer from the pipeline, not by guessing.
+ * Work each answer out from the four steps rather than guessing. The reasoning
+ * matters more than the numbers, because it is what makes build errors
+ * readable for the rest of your life.
  */
-typedef struct {
-    int object_files;       /* .o files produced by steps 1-3 */
-    int times_header_read;  /* how often the preprocessor pasted the header */
-    int definitions_of_add; /* how many .o files contain the function body */
-    int link_steps;         /* how many times the linker runs */
-} BuildShape;
-
-static BuildShape shape_of_two_file_build(void)
+KOAN(a_mental_model_of_the_build)
 {
-    return (BuildShape){
-        .object_files       = 2,
-        .times_header_read  = 2,
-        .definitions_of_add = 1,
-        .link_steps         = 1,
-    };
-}
+    /*
+     * This file's preprocessor pasted in the header and expanded the macro.
+     */
+    KOAN_EQ_INT(/*__*/ 42, BUILD_DEMO_MACRO_ANSWER);
 
-KOAN(assembling_a_mental_model_of_the_build)
-{
-    BuildShape s = shape_of_two_file_build();
+    /*
+     * build_demo.c included the same header, and its preprocessor expanded the
+     * same macro independently. This function returns what *that* file saw.
+     */
+    KOAN_EQ_INT(/*__*/ 42, build_demo_answer());
 
-    /* One .o per .c file — never per header. */
-    KOAN_EQ_INT(/*__*/ 2, s.object_files);
+    /*
+     * They agree — which is the evidence that the header was compiled twice,
+     * once into each object file. Neither file could see the other; both saw
+     * the header.
+     */
+    KOAN_TRUE(BUILD_DEMO_MACRO_ANSWER == build_demo_answer());
 
-    /* The header is textually pasted into each .c that includes it, so its
-     * declarations are compiled once per translation unit. */
-    KOAN_EQ_INT(/*__*/ 2, s.times_header_read);
+    /*
+     * And the call itself crossed the boundary: the arithmetic below happened
+     * inside build_demo.o, from a value defined in this one.
+     */
+    KOAN_EQ_INT(/*__*/ 50, build_demo_add(BUILD_DEMO_MACRO_ANSWER, 8));
 
-    /* But the *definition* appears exactly once. Putting a function body in a
-     * header without `static` or `inline` is how you get "duplicate symbol". */
-    KOAN_EQ_INT(/*__*/ 1, s.definitions_of_add);
-
-    /* And the link happens once, over all the objects at the end. */
-    KOAN_EQ_INT(/*__*/ 1, s.link_steps);
-
-    /* The consequence you will feel daily: editing a header forces every
-     * translation unit that includes it to be recompiled, while editing one
-     * .c file forces only that one. This is why make tracks dependencies —
-     * and why the Makefile passes -MMD to generate them automatically. */
-    KOAN_EQ_INT(/*__*/ 2, s.times_header_read);
-
-    /* The call really did cross the boundary. */
-    KOAN_EQ_INT(/*__*/ 100, build_demo_add(BUILD_DEMO_MACRO_ANSWER, 58));
+    /*
+     * The rule this all adds up to: a header is for *declarations*, because it
+     * is copied into every file that includes it. A function body in a header
+     * would be copied too, and the linker would find several definitions of
+     * one name. Bodies go in .c files, which are compiled exactly once.
+     *
+     * It is also why editing a header rebuilds everything that includes it,
+     * while editing one .c file rebuilds only that file — which is precisely
+     * what make is keeping track of for you.
+     */
 }
 
 KOAN_LESSON(lesson_about_compiling, "About Compiling",
-    KOAN_CASE(the_preprocessor_runs_first),
+    KOAN_CASE(the_preprocessor_replaces_text),
     KOAN_CASE(the_preprocessor_knows_where_it_is),
-    KOAN_CASE(the_standard_version_is_a_compile_time_fact),
-    KOAN_CASE(a_header_is_pasted_in_not_imported),
-    KOAN_CASE(the_linker_joins_separately_compiled_files),
-    KOAN_CASE(some_checks_happen_before_the_program_exists),
+    KOAN_CASE(a_header_is_pasted_in),
+    KOAN_CASE(headers_guard_themselves),
+    KOAN_CASE(the_linker_joins_separate_files),
+    KOAN_CASE(some_checks_happen_before_the_program_runs),
     KOAN_CASE(unselected_branches_are_never_compiled),
-    KOAN_CASE(assembling_a_mental_model_of_the_build)
+    KOAN_CASE(the_standard_version_is_a_compile_time_fact),
+    KOAN_CASE(a_mental_model_of_the_build)
 );
